@@ -81,6 +81,13 @@ function createH5PArchive($sourceDir, $destinationFile): bool {
         RecursiveIteratorIterator::LEAVES_ONLY
     );
 
+    // Count total files for progress bar
+    $totalFiles = iterator_count($iterator);
+    $iterator->rewind();
+
+    // Initialize progress bar
+    $processedFiles = 0;
+    // echo "Packing files:\n";
     foreach ($iterator as $file) {
         if (!$file->isDir()) {
             $filePath = $file->getRealPath();
@@ -89,8 +96,13 @@ function createH5PArchive($sourceDir, $destinationFile): bool {
             $zip->addFile($filePath, $relativePath);
             // Force using deflate compression for consistency.
             $zip->setCompressionName($relativePath, ZipArchive::CM_DEFLATE);
+
+            // Update progress bar:
+            $progress = round((++$processedFiles / $totalFiles) * 100);
+            echo "\rProgress: [".str_repeat("=", $progress / 2 ).str_repeat(" ", 50 - $progress / 2)."] $progress%";
         }
     }
+    echo "\nWriting to disk ...\n";
 
     if (!$zip->close()) {
         die("Error: Could not close the zip archive.\n");
