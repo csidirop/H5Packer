@@ -121,6 +121,8 @@ function extractH5PArchive($archiveFile, $destinationDir): bool {
     if (!extension_loaded('zip')) {
         die("Error: The PHP zip extension is not loaded.\n");
     }
+
+    // Check archive file:
     if (!file_exists($archiveFile)) {
         die("Error: Archive file does not exist: $archiveFile\n");
     }
@@ -128,13 +130,36 @@ function extractH5PArchive($archiveFile, $destinationDir): bool {
     if ($zip->open($archiveFile) !== TRUE) {
         die("Error: Cannot open <$archiveFile> for extraction.\n");
     }
+
+    // Create destination directory if it does not exist or clean it up if it does:
     if (!is_dir($destinationDir)) {
         mkdir($destinationDir, 0755, true);
+    } else {
+        cleanDir($destinationDir);
+        echo "Cleaned up destination directory: $destinationDir\n";
     }
+
+    // Start extraction:
     if (!$zip->extractTo($destinationDir)) {
         die("Error: Extraction failed.\n");
     }
     $zip->close();
     return true;
+}
+
+/**
+ * Deletes all files and subdirectories in the specified directory.
+ * 
+ * @param mixed $dir
+ * @return void
+ */
+function cleanDir($dir) {
+    $it = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::CHILD_FIRST
+    );
+    foreach ($it as $item) {
+        $item->isDir() ? rmdir($item) : unlink($item); 
+    }
 }
 ?>
